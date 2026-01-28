@@ -108,8 +108,11 @@ class LinuxSimulator {
             case 'date':
                 return date("D M j H:i:s T Y") . "\n";
                 
+            case 'tree':
+                return $this->cmdTree($args);
+                
             case 'help':
-                return "Available: whoami, pwd, ls, cat, cd, find, head, tail, echo, date, id, uname, hostname\n";
+                return "Available: whoami, pwd, ls, cat, cd, find, head, tail, echo, date, tree, id, uname, hostname\n";
                 
             default:
                 return "bash: {$cmd}: command not found\n";
@@ -255,6 +258,68 @@ class LinuxSimulator {
         return "tail: {$args}: No such file or directory\n";
     }
     
+    /**
+     * tree command - display directory structure
+     */
+    private function cmdTree($args) {
+        $path = $this->resolvePath($args ?: $this->currentDir);
+        
+        if (!isset($this->filesystem[$path])) {
+            return "tree: '{$args}': No such file or directory\n";
+        }
+        
+        $output = $path . "\n";
+        $output .= $this->buildTree($path, "");
+        
+        // Count directories and files
+        $dirCount = 0;
+        $fileCount = 0;
+        $this->countItems($path, $dirCount, $fileCount);
+        
+        $output .= "\n{$dirCount} directories, {$fileCount} files\n";
+        return $output;
+    }
+    
+    /**
+     * Recursively build tree output
+     */
+    private function buildTree($path, $prefix) {
+        $output = "";
+        $items = $this->filesystem[$path] ?? [];
+        $count = count($items);
+        
+        foreach ($items as $index => $item) {
+            $isLast = ($index === $count - 1);
+            $connector = $isLast ? "└── " : "├── ";
+            $output .= $prefix . $connector . $item . "\n";
+            
+            $fullPath = rtrim($path, '/') . '/' . $item;
+            if (isset($this->filesystem[$fullPath])) {
+                $newPrefix = $prefix . ($isLast ? "    " : "│   ");
+                $output .= $this->buildTree($fullPath, $newPrefix);
+            }
+        }
+        
+        return $output;
+    }
+    
+    /**
+     * Count directories and files recursively
+     */
+    private function countItems($path, &$dirCount, &$fileCount) {
+        $items = $this->filesystem[$path] ?? [];
+        
+        foreach ($items as $item) {
+            $fullPath = rtrim($path, '/') . '/' . $item;
+            if (isset($this->filesystem[$fullPath])) {
+                $dirCount++;
+                $this->countItems($fullPath, $dirCount, $fileCount);
+            } else {
+                $fileCount++;
+            }
+        }
+    }
+
     /**
      * Resolve relative/absolute paths
      */
