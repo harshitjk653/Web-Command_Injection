@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ctf_lab
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - ctf-net
+
+  web:
+    build: .
+    ports:
+      - "3005:80"
+    environment:
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASS=root
+      - DB_NAME=ctf_lab
+    depends_on:
+      - db
+    networks:
+      - ctf-net
+
+networks:
+  ctf-net:
+    driver: bridge

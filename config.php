@@ -8,10 +8,10 @@
 session_start();
 
 // Database configuration
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');  // Update with your MySQL password
-define('DB_NAME', 'ctf_lab');
+define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_PASS', getenv('DB_PASS') ?: '');
+define('DB_NAME', getenv('DB_NAME') ?: 'ctf_lab');
 
 // Create database connection
 $conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
